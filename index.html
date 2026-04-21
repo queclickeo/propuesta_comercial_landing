@@ -203,10 +203,9 @@
 
         input[type=range] {
             -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
             width: 100%;
             background: transparent;
+            touch-action: pan-y;
         }
 
         input[type=range]::-webkit-slider-thumb {
@@ -488,7 +487,7 @@
             </div>
 
             <div id="hero-content-wrapper"
-                class="transition-opacity duration-500 ease-in-out max-w-4xl mx-auto h-[240px] flex flex-col justify-center">
+                class="transition-opacity duration-500 ease-in-out max-w-4xl mx-auto min-h-[160px] md:min-h-[240px] py-4 md:py-6 flex flex-col justify-center">
                 <h1 id="hero-title"
                     class="text-4xl md:text-6xl font-extrabold text-white leading-tight mb-6 tracking-tight">
                     Hacemos que tus anuncios traigan <span
@@ -503,7 +502,7 @@
 
             <div class="mt-8 flex flex-wrap justify-center gap-3 w-full max-w-4xl">
                 <button onclick="updateHero('pain1', this)"
-                    class="pain-btn active bg-brandBlue text-white border border-brandBlue hover:bg-blue-600 px-5 py-3 rounded-lg text-sm font-medium transition-all shadow-[0_0_15px_rgba(26,115,232,0.4)]">
+                    class="pain-btn bg-brandCard text-slate-300 border border-brandBorder hover:border-brandCyan hover:text-white px-5 py-3 rounded-lg text-sm font-medium transition-all">
                     Perdemos tiempo cotizando
                 </button>
                 <button onclick="updateHero('pain2', this)"
@@ -2178,6 +2177,7 @@
         // Contextual Avatar Trigger Logic
         let contextTimeout;
         let avatarEnabled = true;
+        let avatarInteractiveMode = false;
 
         function toggleAvatar() {
             avatarEnabled = !avatarEnabled;
@@ -2194,24 +2194,38 @@
             }
         }
 
-        function showContextHint(text) {
+        function showContextHint(text, interactive = false) {
             if (!avatarEnabled) return;
+            if (avatarInteractiveMode && !interactive) return;
+
             const el = document.getElementById('contextual-assistant');
             const txt = document.getElementById('contextual-text');
             if (!el || !txt) return;
 
-            txt.innerHTML = `<strong>💡 ¿Para qué sirve esto?</strong><br>${text}`;
+            txt.innerHTML = interactive ? text : `<strong>💡 ¿Para qué sirve esto?</strong><br>${text}`;
             el.classList.remove('translate-y-20', 'opacity-0');
 
             clearTimeout(contextTimeout);
-            contextTimeout = setTimeout(() => {
-                hideContextHint();
-            }, 5500);
+            
+            if (!interactive) {
+                contextTimeout = setTimeout(() => {
+                    hideContextHint();
+                }, 5500);
+            } else {
+                avatarInteractiveMode = true;
+            }
         }
 
         function hideContextHint() {
             const el = document.getElementById('contextual-assistant');
             if (el) el.classList.add('translate-y-20', 'opacity-0');
+            avatarInteractiveMode = false;
+        }
+
+        function dismissAvatarInteractive(event) {
+            if (event && event.target.tagName === 'BUTTON') return;
+            clearTimeout(contextTimeout);
+            hideContextHint();
         }
 
         document.addEventListener('click', (e) => {
@@ -2430,15 +2444,18 @@
         function startTour() {
             introJs().setOptions({
                 nextLabel: 'Siguiente', prevLabel: 'Atrás', doneLabel: '¡Arrancar!', showStepNumbers: false, tooltipClass: 'customTooltip',
+                scrollToElement: true,
+                scrollPadding: 160,
+                positionPrecedence: ['bottom', 'top', 'right', 'left'],
                 steps: [
                     { element: document.querySelector('#tour-hero'), intro: formatIntro('<strong>¡Hola! Soy tu asistente en QueClickeo 👋</strong><br><br>Para que la experiencia sea espectacular, <strong>te sugiero abrir este link desde una computadora desktop</strong>. Pero si estás acostado con el celu, ¡no pasa nada, podemos avanzar también!<br><br>Yo te voy a ayudar, configurá todo a tu gusto. Toca "Siguiente" para dar inicio.') },
-                    { element: document.querySelector('#tour-simulador'), intro: formatIntro('<strong>Nivel 1: El Cerebro Financiero 🧠</strong><br><br>Jugá con estas barritas. Poné tus números reales y fijate cuánta plata y clientes podrías generar. Es como tener la bola de cristal de tus ingresos.'), position: 'top' },
-                    { element: document.querySelector('#tour-diagnostico'), intro: formatIntro('<strong>Nivel 2: Diagnóstico Inteligente 🩺</strong><br><br>¿No querés volverte loco leyendo opciones técnicas? Contestame 7 preguntitas súper fáciles y yo calculo en segundos exactamente qué paquete te conviene más.'), position: 'top' },
-                    { element: document.querySelector('#tour-planes'), intro: formatIntro('<strong>Nivel 3: Elegí tus Herramientas ⚔️</strong><br><br>Acá ves los planes pre-armados. Van desde probar tu primer embudo, hasta dejar que nuestro equipo maneje ABSOLUTAMENTE TODO tu proceso de ventas.'), position: 'top' },
-                    { element: document.querySelector('#tour-ajustes'), intro: formatIntro('<strong>Nivel Oculto: A Medida ⚙️</strong><br><br>Desplegá este menú si sos de los que prefieren tunear el auto pieza por pieza. Si agregás o quitás cosas, yo recalculo el precio exacto al momento.'), position: 'top' },
-                    { element: document.querySelector('#tour-resumen'), intro: formatIntro('<strong>Nivel 4: Cero Sorpresas 🔍</strong><br><br>Las cuentas claras. Acá siempre vas a ver tu costo total, separando clarito lo que nos pagás a la agencia, y el presupuesto que va ciego a Facebook ADS por la publicidad.'), position: 'left' },
-                    { element: document.querySelector('#tour-promo'), intro: formatIntro('<strong>El Cofre del Tesoro ✨</strong><br><br>Si chateamos por privado y te lograste llevar una "Palabra Clave" para un descuento o cuotas especiales, ¡metelo acá y dale Aplicar!'), position: 'left' },
-                    { element: document.querySelector('#tour-cuentas-claras'), intro: formatIntro('<strong>Último Nivel: El Trato 📜</strong><br><br>¡El botón dorado! Acá podés leer las 7 reglas comerciales y ver todos los detalles de los Medios de Pago (Transferencia o Mercado Pago, lo elegís vos). Miralo y mándame el WhatsApp para arrancar ya. ¡Te espero del otro lado!'), position: 'left' }
+                    { element: document.querySelector('#tour-simulador'), intro: formatIntro('<strong>Nivel 1: El Cerebro Financiero 🧠</strong><br><br>Jugá con estas barritas. Poné tus números reales y fijate cuánta plata y clientes podrías generar. Es como tener la bola de cristal de tus ingresos.') },
+                    { element: document.querySelector('#tour-diagnostico'), intro: formatIntro('<strong>Nivel 2: Diagnóstico Inteligente 🩺</strong><br><br>¿No querés volverte loco leyendo opciones técnicas? Contestame 7 preguntitas súper fáciles y yo calculo en segundos exactamente qué paquete te conviene más.') },
+                    { element: document.querySelector('#tour-planes'), intro: formatIntro('<strong>Nivel 3: Elegí tus Herramientas ⚔️</strong><br><br>Acá ves los planes pre-armados. Van desde probar tu primer embudo, hasta dejar que nuestro equipo maneje ABSOLUTAMENTE TODO tu proceso de ventas.') },
+                    { element: document.querySelector('#tour-ajustes'), intro: formatIntro('<strong>Nivel Oculto: A Medida ⚙️</strong><br><br>Desplegá este menú si sos de los que prefieren tunear el auto pieza por pieza. Si agregás o quitás cosas, yo recalculo el precio exacto al momento.') },
+                    { element: document.querySelector('#tour-resumen'), intro: formatIntro('<strong>Nivel 4: Cero Sorpresas 🔍</strong><br><br>Las cuentas claras. Acá siempre vas a ver tu costo total, separando clarito lo que nos pagás a la agencia, y el presupuesto que va ciego a Facebook ADS por la publicidad.') },
+                    { element: document.querySelector('#tour-promo'), intro: formatIntro('<strong>El Cofre del Tesoro ✨</strong><br><br>Si chateamos por privado y te lograste llevar una "Palabra Clave" para un descuento o cuotas especiales, ¡metelo acá y dale Aplicar!') },
+                    { element: document.querySelector('#tour-cuentas-claras'), intro: formatIntro('<strong>Último Nivel: El Trato 📜</strong><br><br>¡El botón dorado! Acá podés leer las 7 reglas comerciales y ver todos los detalles de los Medios de Pago (Transferencia o Mercado Pago, lo elegís vos). Miralo y mándame el WhatsApp para arrancar ya. ¡Te espero del otro lado!') }
                 ]
             }).start();
         }
@@ -2464,11 +2481,47 @@
         }
 
         const painData = {
-            pain1: { title: 'Ponemos un filtro automático en <span class="text-transparent bg-clip-text bg-gradient-to-r from-brandCyan to-brandBlue">tus ventas</span>', desc: 'Tu equipo solo va a hablar con gente que realmente quiere y puede pagar tu servicio.' },
-            pain2: { title: 'Hacemos que tus consultas se conviertan en <span class="text-transparent bg-clip-text bg-gradient-to-r from-brandCyan to-brandBlue">ventas reales</span>', desc: 'Tener el WhatsApp lleno no sirve de nada si nadie te compra. Ajustamos los anuncios para buscar a la gente correcta.' },
-            pain3: { title: 'Te traemos consultas nuevas <span class="text-transparent bg-clip-text bg-gradient-to-r from-brandCyan to-brandBlue">todos los días</span>', desc: 'Armamos un sistema para que dejes de rogar que un cliente viejo te recomiende con alguien.' },
-            pain4: { title: 'Acomodamos tus campañas para que sean <span class="text-transparent bg-clip-text bg-gradient-to-r from-brandCyan to-brandBlue">rentables</span>', desc: 'Dejamos de buscar corazoncitos en Instagram y nos enfocamos en medir cuánto nos cuesta cada venta real.' }
+            pain1: { title: 'Dejá de perder tiempo contestando <span class="text-transparent bg-clip-text bg-gradient-to-r from-brandPink to-brandCyan">consultas que no compran</span>', desc: 'Tu equipo solo va a hablar con gente que realmente quiere y puede pagar tu servicio y los vamos a filtrar en modo automático.' },
+            pain2: { title: 'Hacemos que tus consultas crudas se conviertan de una vez en <span class="text-transparent bg-clip-text bg-gradient-to-r from-brandCyan to-brandBlue">ventas reales</span>', desc: 'Tener el WhatsApp lleno de mensajes inútiles no sirve de nada. Ajustamos todo para buscar a la audiencia correcta.' },
+            pain3: { title: 'No dependas más del boca a boca para <span class="text-transparent bg-clip-text bg-gradient-to-r from-brandBlue to-brandCyan">conseguir clientes nuevos</span>', desc: 'Armamos un sistema escalable para que dejes de rogar que un cliente viejo y esporádico te recomiende con alguien.' },
+            pain4: { title: 'Invertí en publicidad sabiendo exactamente <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#00D2FF] to-[#3A7BD5]">cuánta plata vuelve a la caja</span>', desc: 'Dejamos de buscar corazoncitos o interacciones en Instagram y nos enfocamos en medir la rentabilidad matemática pura.' }
         };
+
+        function askAvatarOption1(suggestedPlan) {
+            showContextHint(`
+                <strong>¡Entendido!</strong> Sé exactamente por lo que estás pasando.<br><br>
+                ¿Qué preferís hacer ahora mismo?<br>
+                <div class="flex flex-col gap-2 mt-3 select-none">
+                    <button onclick="goDirectToPlan('${suggestedPlan}')" class="bg-brandCyan text-[#0b1120] px-3 py-2 rounded text-xs font-bold hover:bg-white transition-colors text-left flex items-center gap-2"><i class="ph-bold ph-arrow-right"></i> Ver el plan ideal directo</button>
+                    <button onclick="askAvatarTour()" class="bg-[#0b1120] border border-brandCyan text-brandCyan px-3 py-2 rounded text-xs hover:bg-brandCyan/20 transition-colors text-left flex items-center gap-2"><i class="ph-bold ph-globe"></i> Prefiero recorrer toda la web</button>
+                </div>
+            `, true);
+        }
+
+        function askAvatarTour() {
+            showContextHint(`
+                <strong>¡Genial!</strong> Podés ver nuestra estructura punto por punto.<br><br>
+                ¿Querés que te guíe en un mini tour o preferís leer tranquilo?<br>
+                <div class="flex flex-col gap-2 mt-3 select-none">
+                    <button onclick="hideContextHint(); startTour();" class="bg-brandCyan text-[#0b1120] px-3 py-2 rounded text-xs font-bold hover:bg-white transition-colors text-left flex items-center gap-2"><i class="ph-bold ph-map-trifold"></i> Sí, activá el Tour Guiado</button>
+                    <button onclick="dismissAvatarInteractive(event); showContextHint('¡Dale! Cualquier cosa me avisás. Acordate que podés apagar mi ayuda desde el botón de arriba en la cabecera. Si en algún momento estorbo la pantalla, me hacés un click y desaparezco.', true); setTimeout(hideContextHint, 6000);" class="bg-[#0b1120] border border-brandCyan text-brandCyan px-3 py-2 rounded text-xs hover:bg-brandCyan/20 transition-colors text-left flex items-center gap-2"><i class="ph-bold ph-x"></i> Voy leyendo a mi ritmo</button>
+                </div>
+            `, true);
+        }
+
+        function goDirectToPlan(suggestedPlan) {
+            hideContextHint();
+            selectPlan(suggestedPlan);
+            toggleExtraPlans(true);
+            setTimeout(() => {
+                const b = document.getElementById('plan-' + suggestedPlan);
+                if (b) {
+                    b.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    b.classList.add('animate-shake');
+                    setTimeout(() => b.classList.remove('animate-shake'), 1000);
+                }
+            }, 300);
+        }
 
         function updateHero(painKey, clickedBtn) {
             const wrapper = document.getElementById('hero-content-wrapper');
@@ -2489,24 +2542,17 @@
                     wrapper.style.transform = 'translateY(0)';
 
                     let suggestedPlan = '';
-                    if (painKey === 'pain1') suggestedPlan = 'filtro';
-                    else if (painKey === 'pain2') suggestedPlan = 'performance';
-                    else if (painKey === 'pain3') suggestedPlan = 'previsibilidad';
-                    else if (painKey === 'pain4') suggestedPlan = 'cientifica';
+                    let valDiagQ2 = '';
+                    if (painKey === 'pain1') { suggestedPlan = 'filtro'; valDiagQ2 = 'largo'; }
+                    else if (painKey === 'pain2') { suggestedPlan = 'performance'; valDiagQ2 = 'basura'; }
+                    else if (painKey === 'pain3') { suggestedPlan = 'previsibilidad'; valDiagQ2 = 'escala'; }
+                    else if (painKey === 'pain4') { suggestedPlan = 'cientifica'; valDiagQ2 = 'likes'; }
+
+                    const diagQ2 = document.getElementById('diag-q2');
+                    if (diagQ2 && valDiagQ2) diagQ2.value = valDiagQ2;
 
                     if (suggestedPlan) {
-                        selectPlan(suggestedPlan);
-                        toggleExtraPlans(true);
-                        showToast('Acá tenés un plan armado a medida para esto.', 'info');
-
-                        setTimeout(() => {
-                            const b = document.getElementById('plan-' + suggestedPlan);
-                            if (b) {
-                                b.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                b.classList.add('animate-shake');
-                                setTimeout(() => b.classList.remove('animate-shake'), 1000);
-                            }
-                        }, 500);
+                        askAvatarOption1(suggestedPlan);
                     }
                 }, 300);
             }
@@ -3967,8 +4013,8 @@
     </script>
 
     <!-- ASISTENTE CONTEXTUAL (FLOTANTE) -->
-    <div id="contextual-assistant"
-        class="fixed bottom-6 right-6 z-50 flex items-end gap-3 transition-all duration-500 transform translate-y-20 opacity-0 pointer-events-none">
+    <div id="contextual-assistant" onclick="dismissAvatarInteractive(event)"
+        class="fixed bottom-6 right-6 z-50 flex items-end gap-3 transition-all duration-500 transform translate-y-20 opacity-0 cursor-pointer">
         <div
             class="bg-[#0b1120]/95 backdrop-blur-md border border-brandCyan/40 rounded-2xl p-4 shadow-[0_0_25px_rgba(5,218,232,0.2)] max-w-[280px] md:max-w-sm relative">
             <div
